@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wishlist — Fakestore</title>
+  <link rel="stylesheet" type="text/css" href="./styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="logo">SC</div>
+          <div class="brand-text">
+            <div class="brand-title">Score</div>
+            <div class="brand-sub">sizin mağazanız</div>
+          </div>
+        </div>
+        <div class="controls">
+          <a href="./index.html" class="pill">← Məhsullara qayıt</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container main">
+      <section style="max-width: 600px; margin: 0 auto;">
+        <div class="section-head">
+          <h2>Wishlist</h2>
+          <div class="muted small">Sənin seçimin</div>
+        </div>
+
+        <div class="sidebar-card">
+          <div id="wishListLines" class="stack"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toasts" class="toasts"></div>
+  </div>
+
+  <script src="./app.js"></script>
+  <script>
+    // Wishlist page specific functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const CART_KEY = 'fs_cart_v1';
+      const WISH_KEY = 'fs_wish_v1';
+      const wishListLines = document.getElementById('wishListLines');
+
+      function load(k) { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } }
+      function save(k, v) { localStorage.setItem(k, JSON.stringify(v)) }
+      function toast(type, text, t = 2800) {
+        const toasts = document.getElementById('toasts');
+        const el = document.createElement('div');
+        el.className = 'toast ' + (type || '');
+        el.textContent = text;
+        toasts.appendChild(el);
+        setTimeout(() => { el.style.opacity = '0'; el.addEventListener('transitionend', () => el.remove()) }, t);
+      }
+      function fmt(p) { return Number(p).toFixed(2) + ' AZN'; }
+      function escape(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[m])); }
+
+      let cart = load(CART_KEY) || {};
+      let wish = load(WISH_KEY) || {};
+
+      function renderWish() {
+        wishListLines.innerHTML = '';
+        const ids = Object.keys(wish);
+        if (!ids.length) { wishListLines.innerHTML = '<div class="muted">Wishlist boşdur</div>'; return; }
+        ids.forEach(id => {
+          const p = wish[id];
+          const row = document.createElement('div');
+          row.className = 'cart-line';
+          row.innerHTML = `
+        <img src="${p.image}" alt="${escape(p.title)}" />
+        <div style="flex:1">
+          <div style="font-size:13px">${escape(p.title)}</div>
+          <div class="muted small">${fmt(p.price)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn primary wish-to-cart" data-id="${id}">Səbətə</button>
+          <button class="btn remove-wish" data-id="${id}">Sil</button>
+        </div>
+      `;
+          row.querySelector('.wish-to-cart').addEventListener('click', (e) => {
+            const pid = e.currentTarget.getAttribute('data-id');
+            addToCart(wish[pid], 1);
+            removeFromWish(pid);
+          });
+          row.querySelector('.remove-wish').addEventListener('click', (e) => {
+            const pid = e.currentTarget.getAttribute('data-id');
+            removeFromWish(pid);
+          });
+          wishListLines.appendChild(row);
+        });
+      }
+
+      function addToCart(product, qty = 1) {
+        const id = String(product.id);
+        if (cart[id]) cart[id].qty += qty;
+        else cart[id] = { product, qty };
+        save(CART_KEY, cart);
+        toast('success', 'Məhsul səbətə əlavə edildi');
+      }
+
+      function removeFromWish(id) { delete wish[id]; save(WISH_KEY, wish); renderWish(); toast('success', 'Wishlist-dən silindi'); }
+
+      // Listen for wishlist changes from other tabs/pages
+      window.addEventListener('storage', (e) => {
+        if (e.key === WISH_KEY) {
+          wish = load(WISH_KEY) || {};
+          renderWish();
+        }
+      });
+
+      renderWish();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="./styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="logo">Seyid</div>
+          <div class="brand-text">
+            <div class="brand-title">Store</div>
+            <div class="brand-sub">7/24</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="search-wrap">
+            <input id="search" class="search" placeholder="Axtar: məhsul adı, təsviri..." />
+            <button id="clearSearch" class="icon-btn">✕</button>
+          </div>
+
+          <select id="category" class="select"></select>
+          <select id="sort" class="select">
+            <option value="relevance">Relevance</option>
+            <option value="price_asc">Qiymət: aşağı → yüksək</option>
+            <option value="price_desc">Qiymət: yüksək → aşağı</option>
+          </select>
+
+          <a href="./wishlist.html" class="pill">Wishlist <span id="wishCount" class="count">0</span></a>
+          <a href="./cart.html" class="pill primary">Səbət <span id="cartCount" class="count">0</span></a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container main">
+      <section class="products-col">
+        <div class="section-head">
+          <h2>Məhsullar</h2>
+          <div id="resultsInfo" class="muted small">—</div>
+        </div>
+        <div id="productGrid" class="grid"></div>
+      </section>
+    </main>
+
+    <div id="toasts" class="toasts"></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

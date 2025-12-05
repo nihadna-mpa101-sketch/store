@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Səbət — Fakestore</title>
+  <link rel="stylesheet" type="text/css" href="./styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="logo">SC</div>
+          <div class="brand-text">
+            <div class="brand-title">Score</div>
+            <div class="brand-sub">sizin mağazanız</div>
+          </div>
+        </div>
+        <div class="controls">
+          <a href="./index.html" class="pill">← Məhsullara qayıt</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container main">
+      <section style="max-width: 600px; margin: 0 auto;">
+        <div class="section-head">
+          <h2>Səbətim</h2>
+          <div id="resultsInfo" class="muted small">Sənin seçimin</div>
+        </div>
+
+        <div class="sidebar-card">
+          <div id="cartLines" class="stack"></div>
+
+          <div class="cart-footer">
+            <div class="muted small">Cəmi:</div>
+            <div id="cartTotal" class="total">0 AZN</div>
+          </div>
+
+          <div class="side-actions">
+            <button id="checkout" class="btn primary">Ödənişə keç</button>
+            <button id="clearCart" class="btn">Təmizlə</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toasts" class="toasts"></div>
+  </div>
+
+  <script src="./app.js"></script>
+  <script>
+    // Cart page specific functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const CART_KEY = 'fs_cart_v1';
+      const cartLines = document.getElementById('cartLines');
+      const cartTotal = document.getElementById('cartTotal');
+      const clearCartBtn = document.getElementById('clearCart');
+      const checkoutBtn = document.getElementById('checkout');
+
+      function load(k) { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } }
+      function save(k, v) { localStorage.setItem(k, JSON.stringify(v)) }
+      function toast(type, text, t = 2800) {
+        const toasts = document.getElementById('toasts');
+        const el = document.createElement('div');
+        el.className = 'toast ' + (type || '');
+        el.textContent = text;
+        toasts.appendChild(el);
+        setTimeout(() => { el.style.opacity = '0'; el.addEventListener('transitionend', () => el.remove()) }, t);
+      }
+      function fmt(p) { return Number(p).toFixed(2) + ' AZN'; }
+      function escape(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[m])); }
+
+      let cart = load(CART_KEY) || {};
+
+      function renderCart() {
+        cartLines.innerHTML = '';
+        const ids = Object.keys(cart);
+        if (!ids.length) { cartLines.innerHTML = '<div class="muted">Səbət boşdur</div>'; return; }
+        let total = 0;
+        ids.forEach(id => {
+          const item = cart[id];
+          total += item.product.price * item.qty;
+          const row = document.createElement('div');
+          row.className = 'cart-line';
+          row.innerHTML = `
+        <img src="${item.product.image}" alt="${escape(item.product.title)}" />
+        <div style="flex:1">
+          <div style="font-size:13px">${escape(item.product.title)}</div>
+          <div class="muted small">${fmt(item.product.price)} x ${item.qty} = ${(item.product.price * item.qty).toFixed(2)}</div>
+        </div>
+        <div class="qty">
+          <button class="dec">-</button>
+          <div style="min-width:28px;text-align:center">${item.qty}</div>
+          <button class="inc">+</button>
+          <button class="btn remove" data-id="${id}" style="margin-left:8px">Sil</button>
+        </div>
+      `;
+          row.querySelector('.inc').addEventListener('click', () => changeQty(id, item.qty + 1));
+          row.querySelector('.dec').addEventListener('click', () => changeQty(id, Math.max(1, item.qty - 1)));
+          row.querySelector('.remove').addEventListener('click', (e) => {
+            const rid = e.currentTarget.getAttribute('data-id');
+            removeFromCart(rid);
+          });
+          cartLines.appendChild(row);
+        });
+        cartTotal.textContent = fmt(total);
+      }
+
+      function changeQty(id, qty) { if (!cart[id]) return; cart[id].qty = qty; save(CART_KEY, cart); renderCart(); }
+      function removeFromCart(id) { delete cart[id]; save(CART_KEY, cart); renderCart(); toast('success', 'Məhsul səbətdən silindi'); }
+      function clearCart() { cart = {}; save(CART_KEY, cart); renderCart(); toast('success', 'Səbət təmizləndi'); }
+
+      clearCartBtn.addEventListener('click', () => {
+        if (confirm('Səbəti tam təmizləmək istədiyinizə əminsiniz?')) clearCart();
+      });
+
+      checkoutBtn.addEventListener('click', () => {
+        if (Object.keys(cart).length === 0) { toast('error', 'Səbət boşdur'); return; }
+        toast('success', 'Ödəniş səhifəsinə yönləndirilirsiniz (demo)');
+        setTimeout(() => clearCart(), 1000);
+      });
+
+      // Listen for cart changes from other tabs/pages
+      window.addEventListener('storage', (e) => {
+        if (e.key === CART_KEY) {
+          cart = load(CART_KEY) || {};
+          renderCart();
+        }
+      });
+
+      renderCart();
+    });
+  </script>
+</body>
+</html>
